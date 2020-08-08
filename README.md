@@ -1,4 +1,4 @@
-# Currency Reader (Sri Lankan Rupees)
+# Currency Reader (Sri Lankan Rupees) - [Beta]
 
 ## Overview
 

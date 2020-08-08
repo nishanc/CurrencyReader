@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="cr_aw_color_primary">#D81B60</color>
+    <color name="cr_aw_color_primary_dark">#8d153a</color>
+    <color name="cr_aw_color_accent">#425066</color>
+    <color name="cr_aw_semi_transparent">#66000000</color>
+</resources>

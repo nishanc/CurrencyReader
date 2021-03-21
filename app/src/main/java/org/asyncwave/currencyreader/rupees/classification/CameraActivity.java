@@ -29,6 +29,7 @@ import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
 import android.media.ImageReader.OnImageAvailableListener;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -37,6 +38,7 @@ import android.os.Trace;
 import androidx.annotation.NonNull;
 import androidx.annotation.UiThread;
 import androidx.appcompat.app.AppCompatActivity;
+import android.speech.tts.TextToSpeech;
 import android.util.Size;
 import android.view.Surface;
 import android.view.View;
@@ -51,6 +53,7 @@ import android.widget.Toast;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Locale;
 
 import org.asyncwave.currencyreader.rupees.classification.env.ImageUtils;
 import org.asyncwave.currencyreader.rupees.classification.env.Logger;
@@ -101,6 +104,8 @@ public abstract class CameraActivity extends AppCompatActivity
   private Classifier.Model model = Classifier.Model.FLOAT_EFFICIENTNET;
   private Classifier.Device device = Classifier.Device.CPU;
   private int numThreads = -1;
+  private TextToSpeech t1;
+  private String lastSpoke = "";
 
   @Override
   protected void onCreate(final Bundle savedInstanceState) {
@@ -125,6 +130,15 @@ public abstract class CameraActivity extends AppCompatActivity
     gestureLayout = findViewById(R.id.gesture_layout);
     sheetBehavior = BottomSheetBehavior.from(bottomSheetLayout);
     bottomSheetArrowImageView = findViewById(R.id.bottom_sheet_arrow);
+
+    t1=new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+      @Override
+      public void onInit(int status) {
+        if(status != TextToSpeech.ERROR) {
+          t1.setLanguage(Locale.UK);
+        }
+      }
+    });
 
     ViewTreeObserver vto = gestureLayout.getViewTreeObserver();
     vto.addOnGlobalLayoutListener(
@@ -520,12 +534,37 @@ public abstract class CameraActivity extends AppCompatActivity
     }
   }
 
+  protected void speakResults(List<Classifier.Recognition> results) {
+    Classifier.Recognition recognition = results.get(0);
+    if (recognition != null) {
+      if (recognition.getTitle() != null) {
+        recognitionTextView.setText(recognition.getTitle());
+        String toSpeak = recognition.getTitle();
+        if (!toSpeak.equals(lastSpoke)){
+          AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                t1.speak(toSpeak,TextToSpeech.QUEUE_FLUSH,null,null);
+              } else {
+                t1.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
+              }
+            }
+          });
+          lastSpoke = toSpeak;
+        }
+      }
+    }
+  }
+
   @UiThread
   protected void showResultsInBottomSheet(List<Classifier.Recognition> results) {
     if (results != null && results.size() >= 3) {
       Classifier.Recognition recognition = results.get(0);
       if (recognition != null) {
-        if (recognition.getTitle() != null) recognitionTextView.setText(recognition.getTitle());
+        if (recognition.getTitle() != null) {
+          recognitionTextView.setText(recognition.getTitle());
+        }
         if (recognition.getConfidence() != null)
           recognitionValueTextView.setText(
               String.format("%.2f", (100 * recognition.getConfidence())) + "%");

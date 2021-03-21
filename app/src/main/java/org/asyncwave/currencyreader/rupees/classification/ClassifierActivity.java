@@ -106,6 +106,7 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
                       showCameraResolution(cropSize + "x" + cropSize);
                       showRotationInfo(String.valueOf(sensorOrientation));
                       showInference(lastProcessingTimeMs + "ms");
+                      speakResults(results);
                     }
                   });
             }
